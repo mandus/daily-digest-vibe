@@ -1,0 +1,18 @@
+top_n: 500
+api_base: https://hacker-news.firebaseio.com/v0
+storage:
+  type: sqlite
+  path: data/stories.db
+  stories_file: data/stories.json
+  preferences_file: data/preferences.json
+ai:
+  embedding_model: text-embedding-ada-002
+  cluster_algorithm: kmeans
+  num_clusters: 10
+  use_local_embeddings: false
+  local_model_path: null
+schedule:
+  fetch_interval: 3600
+  digest_time: 08:00
+  auto_fetch: false
+data_dir: data
