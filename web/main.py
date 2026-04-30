@@ -68,12 +68,15 @@ async def index(request: Request):
     stats = learner.get_statistics()
     
     # Convert Pydantic models to dicts for Jinja2
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "digest": digest.model_dump(),
-        "stats": stats,
-        "page_title": "Daily Digest"
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "digest": digest.model_dump(),
+            "stats": stats,
+            "page_title": "Daily Digest"
+        }
+    )
 
 
 @app.get("/stories", response_class=HTMLResponse)
@@ -85,14 +88,17 @@ async def list_stories(request: Request, hours: int = 24, limit: int = 100):
     # Convert Story models to dicts for Jinja2
     stories_dicts = [story.model_dump() for story in stories[:limit]]
     
-    return templates.TemplateResponse("stories.html", {
-        "request": request,
-        "stories": stories_dicts,
-        "total": len(stories),
-        "page_title": "All Stories",
-        "hours": hours,
-        "limit": limit
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="stories.html",
+        context={
+            "stories": stories_dicts,
+            "total": len(stories),
+            "page_title": "All Stories",
+            "hours": hours,
+            "limit": limit
+        }
+    )
 
 
 @app.get("/story/{story_id}", response_class=HTMLResponse)
@@ -104,11 +110,14 @@ async def show_story(request: Request, story_id: int):
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
     
-    return templates.TemplateResponse("story.html", {
-        "request": request,
-        "story": story.model_dump(),
-        "page_title": story.title
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="story.html",
+        context={
+            "story": story.model_dump(),
+            "page_title": story.title
+        }
+    )
 
 
 @app.post("/story/{story_id}/read")
@@ -159,14 +168,17 @@ async def preferences(request: Request):
     learner = create_preference_learner()
     stats = learner.get_statistics()
     
-    return templates.TemplateResponse("preferences.html", {
-        "request": request,
-        "stats": stats,
-        "topic_weights": learner.get_topic_weights(),
-        "domain_weights": learner.get_domain_weights(),
-        "author_weights": learner.get_author_weights(),
-        "page_title": "Preferences"
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="preferences.html",
+        context={
+            "stats": stats,
+            "topic_weights": learner.get_topic_weights(),
+            "domain_weights": learner.get_domain_weights(),
+            "author_weights": learner.get_author_weights(),
+            "page_title": "Preferences"
+        }
+    )
 
 
 @app.post("/preferences/reset")
