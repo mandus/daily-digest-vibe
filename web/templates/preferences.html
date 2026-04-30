@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Preferences - Daily Digest Vibe{% endblock %}
+
+{% block content %}
+<div class="preferences">
+    <h2>Your Preferences</h2>
+    <p class="digest-meta">Learning from your interactions to personalize your digest</p>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_stories_read }}</div>
+            <div class="stat-label">Stories Read</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_stories_hidden }}</div>
+            <div class="stat-label">Stories Hidden</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.topic_count }}</div>
+            <div class="stat-label">Topics Tracked</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.domain_count }}</div>
+            <div class="stat-label">Domains Tracked</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.author_count }}</div>
+            <div class="stat-label">Authors Tracked</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.keyword_count }}</div>
+            <div class="stat-label">Keywords Tracked</div>
+        </div>
+    </div>
+    
+    <div class="preference-section">
+        <h3>🎯 Top Topics</h3>
+        {% if topic_weights %}
+        <div class="preference-grid">
+            {% for topic, weight in topic_weights.items() | sort(attribute='1', reverse=true)[:20] %}
+            <div class="preference-item">
+                <span class="preference-name">{{ topic }}</span>
+                <span class="preference-weight {% if weight < 0 %}negative{% endif %}">{{ "%.2f"|format(weight) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="alert alert-warning">No topic preferences yet. Read some stories to start learning!</p>
+        {% endif %}
+    </div>
+    
+    <div class="preference-section">
+        <h3>🌐 Top Domains</h3>
+        {% if domain_weights %}
+        <div class="preference-grid">
+            {% for domain, weight in domain_weights.items() | sort(attribute='1', reverse=true)[:20] %}
+            <div class="preference-item">
+                <span class="preference-name">{{ domain }}</span>
+                <span class="preference-weight {% if weight < 0 %}negative{% endif %}">{{ "%.2f"|format(weight) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="alert alert-warning">No domain preferences yet.</p>
+        {% endif %}
+    </div>
+    
+    <div class="preference-section">
+        <h3>✍️ Top Authors</h3>
+        {% if author_weights %}
+        <div class="preference-grid">
+            {% for author, weight in author_weights.items() | sort(attribute='1', reverse=True)[:20] %}
+            <div class="preference-item">
+                <span class="preference-name">{{ author }}</span>
+                <span class="preference-weight {% if weight < 0 %}negative{% endif %}">{{ "%.2f"|format(weight) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="alert alert-warning">No author preferences yet.</p>
+        {% endif %}
+    </div>
+    
+    <div class="preference-section">
+        <h3>🔧 Settings</h3>
+        <div class="settings-grid">
+            <div class="setting-item">
+                <div class="setting-name">Minimum Score</div>
+                <div class="setting-value">{{ stats.min_score }}</div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-name">Max Age (hours)</div>
+                <div class="setting-value">{{ "%.1f"|format(stats.max_age_hours) }}</div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-name">Hide Read Stories</div>
+                <div class="setting-value">{{ "Yes" if stats.hide_read else "No" }}</div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-name">Learning Rate</div>
+                <div class="setting-value">{{ "%.2f"|format(stats.learning_rate) }}</div>
+            </div>
+        </div>
+        
+        <div class="setting-actions">
+            <a href="/" class="btn btn-secondary">← Back to Digest</a>
+            <button class="btn btn-danger" onclick="resetPreferences()">🗑️ Reset All Preferences</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.setting-item {
+    background: var(--background-color);
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+}
+
+.setting-name {
+    font-weight: 500;
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.setting-value {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-top: 0.25rem;
+}
+
+.setting-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-form select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background: white;
+    font-size: 0.875rem;
+}
+
+.filter-form label {
+    font-weight: 500;
+    color: var(--text-light);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function resetPreferences() {
+    if (confirm('Are you sure you want to reset all your preferences? This cannot be undone.')) {
+        fetch('/preferences/reset', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert('Preferences reset successfully!');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to reset preferences: ' + error.message);
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Daily Digest Vibe{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <h1>Daily Digest Vibe</h1>
+        <p class="subtitle">Your personalized Hacker News digest</p>
+    </header>
+    
+    <nav class="nav">
+        <a href="/" {% if request.url.path == '/' %}class="active"{% endif %}>Digest</a>
+        <a href="/stories" {% if request.url.path.startswith('/stories') %}class="active"{% endif %}>All Stories</a>
+        <a href="/preferences" {% if request.url.path == '/preferences' %}class="active"{% endif %}>Preferences</a>
+        <a href="/fetch" class="btn btn-primary btn-sm">Fetch New</a>
+        <a href="/process" class="btn btn-success btn-sm">Process</a>
+        <a href="/refresh" class="btn btn-warning btn-sm">Refresh All</a>
+    </nav>
+    
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="footer">
+        <p>Daily Digest Vibe - A personalized Hacker News reader</p>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -137,6 +137,14 @@ async def preferences(request: Request):
     })
 
 
+@app.post("/preferences/reset")
+async def reset_preferences():
+    """Reset all user preferences."""
+    learner = create_preference_learner()
+    learner.reset_preferences()
+    return {"status": "ok", "message": "Preferences reset successfully"}
+
+
 @app.get("/fetch", response_class=HTMLResponse)
 async def fetch_stories(request: Request, limit: int = 500):
     """Fetch new stories from HN."""

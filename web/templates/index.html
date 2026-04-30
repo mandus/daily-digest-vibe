@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} - Daily Digest Vibe{% endblock %}
+
+{% block content %}
+<div class="digest-header">
+    <h2>Your Daily Digest</h2>
+    <p class="digest-meta">
+        Generated: {{ digest.date.strftime('%Y-%m-%d %H:%M:%S UTC') }} |
+        Total stories: {{ digest.total_stories }} |
+        New since last check: {{ digest.new_stories_since_last }}
+    </p>
+</div>
+
+{% if digest.groups %}
+    {% for group in digest.top_groups %}
+    <article class="group">
+        <div class="group-header">
+            <h3 class="group-title">{{ group.label }}</h3>
+            <span class="group-meta">{{ group.story_count }} stories | Total score: {{ group.total_score }}</span>
+        </div>
+        {% if group.summary %}
+        <p class="group-summary">{{ group.summary }}</p>
+        {% endif %}
+        
+        {% for story in group.stories[:10] %}
+        <div class="story {% if story.user_read %}read{% elif story.user_hidden %}hidden{% else %}new{% endif %}" id="story-{{ story.id }}">
+            <div class="story-header">
+                <span class="story-score">{{ story.score }}</span>
+                <div class="story-title">
+                    {% if story.url %}
+                    <a href="{{ story.url }}" target="_blank">{{ story.title }}</a>
+                    {% else %}
+                    <span>{{ story.title }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if story.url %}
+            <div class="story-url">{{ story.url }}</div>
+            {% endif %}
+            <div class="story-meta">
+                {% if story.by %}
+                <span>👤 {{ story.by }}</span>
+                {% endif %}
+                {% if story.url_domain %}
+                <span>🌐 {{ story.url_domain }}</span>
+                {% endif %}
+                <span>💬 {{ story.descendants }} comments</span>
+                <span>⏱️ {{ "%.1f"|format(story.age_hours) }}h ago</span>
+                {% if story.topic_label %}
+                <span>🏷️ {{ story.topic_label }}</span>
+                {% endif %}
+            </div>
+            <div class="story-actions">
+                <button class="btn btn-success btn-sm" onclick="markStory({{ story.id }}, 'read')">✓ Read</button>
+                <button class="btn btn-warning btn-sm" onclick="markStory({{ story.id }}, 'hide')">👁️ Hide</button>
+                <button class="btn btn-primary btn-sm" onclick="markStory({{ story.id }}, 'interest')">⭐ Interest</button>
+                <a href="/story/{{ story.id }}" class="btn btn-sm">📄 Details</a>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if group.story_count > 10 %}
+        <p class="digest-meta">+ {{ group.story_count - 10 }} more stories in this group</p>
+        {% endif %}
+    </article>
+    {% endfor %}
+{% else %}
+<div class="alert alert-warning">
+    No stories found. Try fetching new stories first.
+</div>
+{% endif %}
+
+{% if stats %}
+<div class="stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_stories_read }}</div>
+        <div class="stat-label">Stories Read</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_stories_hidden }}</div>
+        <div class="stat-label">Stories Hidden</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.topic_count }}</div>
+        <div class="stat-label">Topics Tracked</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.domain_count }}</div>
+        <div class="stat-label">Domains Tracked</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function markStory(storyId, action) {
+    fetch('/story/' + storyId + '/' + action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            // Update UI
+            const storyEl = document.getElementById('story-' + storyId);
+            if (action === 'read') {
+                storyEl.classList.remove('new', 'hidden');
+                storyEl.classList.add('read');
+            } else if (action === 'hide') {
+                storyEl.classList.remove('new', 'read');
+                storyEl.classList.add('hidden');
+            }
+            // Show temporary feedback
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update story: ' + error.message);
+    });
+}
+</script>
+{% endblock %}
