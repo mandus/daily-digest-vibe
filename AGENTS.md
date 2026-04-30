@@ -137,6 +137,86 @@ If you're an AI agent (Mistral Vibe Code, etc.):
 4. **Document your work** in commit messages
 5. **Create PRs** for all non-trivial changes
 
+## ⚠️ Common Pitfalls & How to Avoid Them
+
+### FastAPI TemplateResponse API
+**Problem:** Using Flask-style template rendering with FastAPI causes `TypeError: unhashable type: 'dict'`
+
+**❌ Wrong (Flask-style):**
+```python
+return templates.TemplateResponse("index.html", {
+    "request": request,
+    "data": my_data
+})
+```
+
+**✅ Correct (FastAPI/Starlette-style):**
+```python
+return templates.TemplateResponse(
+    request=request,
+    name="index.html",
+    context={
+        "data": my_data
+    }
+)
+```
+
+**Why:** FastAPI's `TemplateResponse` uses keyword arguments, not positional dict arguments.
+
+### Pydantic Models in Templates
+**Problem:** Pydantic models can't be directly rendered in Jinja2 templates
+
+**❌ Wrong:**
+```python
+return templates.TemplateResponse(..., context={"story": story_model})
+```
+
+**✅ Correct:**
+```python
+return templates.TemplateResponse(..., context={"story": story_model.model_dump()})
+```
+
+**Why:** Jinja2 can't serialize Pydantic models. Use `.model_dump()` or `.dict()` to convert to plain dict.
+
+### Datetime Objects in Templates
+**Problem:** Datetime objects cause serialization errors in Jinja2
+
+**✅ Solution:** Add custom Jinja2 filters:
+```python
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+def format_datetime(value, format="%Y-%m-%d %H:%M:%S"):
+    if value is None:
+        return ""
+    if hasattr(value, 'strftime'):
+        return value.strftime(format)
+    return str(value)
+
+env = Environment(loader=PackageLoader("package", "templates"))
+env.filters["datetime"] = format_datetime
+templates = Jinja2Templates(env=env)
+```
+
+Then in templates: `{{ my_date|datetime }}`
+
+### Always Test Web Endpoints
+Before committing web changes:
+```bash
+# Test the server locally
+uv run uvicorn web.main:app --reload
+
+# Test key endpoints
+curl http://localhost:8000/
+curl http://localhost:8000/api/digest
+```
+
+## 🔍 Debugging Tips
+
+1. **Check the exact error message** - It often tells you exactly what's wrong
+2. **Compare with working examples** - Look at existing code in the repo
+3. **Read the framework docs** - FastAPI, Starlette, Jinja2 have great documentation
+4. **Test incrementally** - Add one feature at a time and test
+
 ## 🆘 Emergency Recovery
 
 If you accidentally made changes on main:
