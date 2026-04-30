@@ -53,11 +53,11 @@
             <span>🌐 {{ story.url_domain }}</span>
             {% endif %}
             <span>💬 {{ story.descendants }} comments</span>
-            <span>⏱️ {{ "%.1f"|format(story.age_hours) }}h ago</span>
+            <span>⏱️ {{ story.age_hours|age }}</span>
             {% if story.topic_label %}
             <span>🏷️ {{ story.topic_label }}</span>
             {% endif %}
-            <span>📅 {{ story.fetched_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            <span>📅 {{ story.fetched_at|datetime('%Y-%m-%d %H:%M') }}</span>
         </div>
         <div class="story-actions">
             <button class="btn btn-success btn-sm" onclick="markStory({{ story.id }}, 'read')">✓ Read</button>

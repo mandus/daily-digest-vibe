@@ -6,7 +6,7 @@
 <div class="digest-header">
     <h2>Your Daily Digest</h2>
     <p class="digest-meta">
-        Generated: {{ digest.date.strftime('%Y-%m-%d %H:%M:%S UTC') }} |
+        Generated: {{ digest.date|datetime }} |
         Total stories: {{ digest.total_stories }} |
         New since last check: {{ digest.new_stories_since_last }}
     </p>
@@ -46,7 +46,7 @@
                 <span>🌐 {{ story.url_domain }}</span>
                 {% endif %}
                 <span>💬 {{ story.descendants }} comments</span>
-                <span>⏱️ {{ "%.1f"|format(story.age_hours) }}h ago</span>
+                <span>⏱️ {{ story.age_hours|age }}</span>
                 {% if story.topic_label %}
                 <span>🏷️ {{ story.topic_label }}</span>
                 {% endif %}
