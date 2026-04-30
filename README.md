@@ -41,7 +41,38 @@ This tool periodically fetches top stories from Hacker News, groups them by topi
 
 ## Quick Start
 
+### Using uv (recommended)
+
 ```bash
+# Install uv if you don't have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies and create virtual environment
+uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Run initial setup
+python -m daily_digest setup
+
+# Fetch and process stories
+python -m daily_digest fetch
+
+# Generate daily digest
+python -m daily_digest digest
+
+# Run all (fetch + process + generate)
+python -m daily_digest run
+```
+
+### Using pip
+
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
 # Install dependencies
 pip install -r requirements.txt
 
