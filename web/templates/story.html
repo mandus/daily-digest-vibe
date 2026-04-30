@@ -31,10 +31,10 @@
             <strong>Comments:</strong> {{ story.descendants }}
         </div>
         <div class="meta-item">
-            <strong>Posted:</strong> {{ story.fetched_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+            <strong>Posted:</strong> {{ story.fetched_at|datetime }}
         </div>
         <div class="meta-item">
-            <strong>Age:</strong> {{ "%.1f"|format(story.age_hours) }} hours ago
+            <strong>Age:</strong> {{ story.age_hours|age }}
         </div>
         {% if story.topic_label %}
         <div class="meta-item">

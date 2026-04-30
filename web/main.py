@@ -21,8 +21,34 @@ app = FastAPI(title="Daily Digest Vibe")
 # Mount static files
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
-# Setup templates
-templates = Jinja2Templates(directory="web/templates")
+# Setup templates with custom filters
+def format_datetime(value, format="%Y-%m-%d %H:%M:%S UTC"):
+    """Format datetime object."""
+    if value is None:
+        return ""
+    if hasattr(value, 'strftime'):
+        return value.strftime(format)
+    return str(value)
+
+def format_age(value):
+    """Format age in hours."""
+    if value is None:
+        return ""
+    try:
+        return f"{float(value):.1f}h ago"
+    except (ValueError, TypeError):
+        return str(value)
+
+# Create Jinja2 environment with custom filters
+from jinja2 import Environment, PackageLoader, select_autoescape
+env = Environment(
+    loader=PackageLoader("web", "templates"),
+    autoescape=select_autoescape()
+)
+env.filters["datetime"] = format_datetime
+env.filters["age"] = format_age
+
+templates = Jinja2Templates(env=env)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -41,9 +67,10 @@ async def index(request: Request):
     learner = create_preference_learner()
     stats = learner.get_statistics()
     
+    # Convert Pydantic models to dicts for Jinja2
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "digest": digest,
+        "digest": digest.model_dump(),
         "stats": stats,
         "page_title": "Daily Digest"
     })
@@ -55,11 +82,16 @@ async def list_stories(request: Request, hours: int = 24, limit: int = 100):
     storage = get_storage()
     stories = storage.get_recent_stories(hours=hours)
     
+    # Convert Story models to dicts for Jinja2
+    stories_dicts = [story.model_dump() for story in stories[:limit]]
+    
     return templates.TemplateResponse("stories.html", {
         "request": request,
-        "stories": stories[:limit],
+        "stories": stories_dicts,
         "total": len(stories),
-        "page_title": "All Stories"
+        "page_title": "All Stories",
+        "hours": hours,
+        "limit": limit
     })
 
 
@@ -74,7 +106,7 @@ async def show_story(request: Request, story_id: int):
     
     return templates.TemplateResponse("story.html", {
         "request": request,
-        "story": story,
+        "story": story.model_dump(),
         "page_title": story.title
     })
 
